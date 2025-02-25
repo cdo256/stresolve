@@ -10,7 +10,8 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.12"
+cchardet = "^2.1.7" 
 
 [build-system]
 requires = ["poetry-core"]
