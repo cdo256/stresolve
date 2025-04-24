@@ -60,10 +60,9 @@ def color_diff_line(line):
     return colored(line, color)
 
 
-def print_colored_diff(lines):
-    print()
-    print("\n".join(map(color_diff_line, lines)))
-    print()
+def parse_diff(diff):
+    lines = diff.splitlines()
+    return list(map(color_diff_line, lines))
 
 
 def compare_files(file1, file2):
@@ -75,13 +74,17 @@ def compare_files(file1, file2):
             diff = "Binary files are identical."
         else:
             diff = "Binary files differ."
-    lines = diff.splitlines() + [""]
-    for file, version in [(file1, "original"), (file2, "conflict")]:
-        fstat = file.stat()
-        lines.append(f"{file} ({version}):")
-        lines.append(f"  Length: {fstat.st_size} bytes")
-        lines.append(f"  Type: {file_type_from_stat(fstat)}")
-        lines.append("")
+    lines = parse_diff(diff) + [""]
+    fstat = file1.stat()
+    lines.append(colored(f"{file1} (original):", "red"))
+    lines.append(colored(f"  Length: {fstat.st_size} bytes", "red"))
+    lines.append(colored(f"  Type: {file_type_from_stat(fstat)}", "red"))
+    lines.append("")
+    fstat = file2.stat()
+    lines.append(colored(f"{file2} (conflict):", "green"))
+    lines.append(colored(f"  Length: {fstat.st_size} bytes", "green"))
+    lines.append(colored(f"  Type: {file_type_from_stat(fstat)}", "green"))
+    lines.append("")
 
     return lines
 
@@ -99,17 +102,17 @@ def resolve_conflicts(directory):
 
         diff = compare_files(original, conflict)
         print("\nDifferences:")
-        print_colored_diff(diff)
+        print("\n".join(diff))
 
         while True:
             choice = input(
                 "Keep original (o), use sync conflict (c), or skip (k)? "
             ).lower()
-            if choice == "c":
+            if choice == "o":
                 os.remove(conflict)
                 print("Kept current version, removed sync conflict.")
                 break
-            elif choice == "s":
+            elif choice == "c":
                 os.replace(conflict, original)
                 print("Used sync conflict version, replaced original file.")
                 break
