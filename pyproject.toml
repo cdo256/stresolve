@@ -9,6 +9,9 @@ packages = [
   { include = "stresolve" }
 ]
 
+[tool.poetry.scripts]
+stresolve = "stresolve.__main__:main"
+
 [tool.poetry.dependencies]
 python = "^3.12"
 cchardet = "^2.1.7" 

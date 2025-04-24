@@ -9,39 +9,56 @@
       poetry2nix,
     }:
     let
-      supportedSystems = [
+      inherit (nixpkgs.lib.attrsets)
+        mapAttrs
+        mergeAttrsList
+        ;
+      inherit (nixpkgs.lib) genAttrs;
+      systems = [
         "x86_64-linux"
-        "x86_64-darwin"
-        "aarch64-linux"
-        "aarch64-darwin"
       ];
-      forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
-      pkgs = forAllSystems (system: nixpkgs.legacyPackages.${system});
+      # FIXME: This is clobbering other systems when more than one system is included.
+      # Use flake-utils?
+      forEachSystem =
+        fn:
+        mergeAttrsList (
+          map (
+            system:
+            let
+              res = fn nixpkgs.legacyPackages.${system};
+            in
+            mapAttrs (name: value: {
+              ${system} = value;
+            }) res
+          ) systems
+        );
     in
-    {
-      packages = forAllSystems (
-        system:
-        let
-          inherit (poetry2nix.lib.mkPoetry2Nix { pkgs = pkgs.${system}; }) mkPoetryApplication;
-        in
-        {
-          default = mkPoetryApplication { projectDir = self; };
-        }
-      );
+    forEachSystem (
+      pkgs:
+      let
+        inherit (poetry2nix.lib.mkPoetry2Nix { inherit pkgs; }) mkPoetryApplication;
 
-      devShells = forAllSystems (
-        system:
-        let
-          inherit (poetry2nix.lib.mkPoetry2Nix { pkgs = pkgs.${system}; }) mkPoetryEnv;
-        in
-        {
-          default = pkgs.${system}.mkShellNoCC {
-            packages = with pkgs.${system}; [
-              (mkPoetryEnv { projectDir = self; })
-              poetry
+        extraPackages = [ pkgs.gcc ];
+      in
+      {
+        packages = {
+          default = mkPoetryApplication {
+            projectDir = self;
+            inherit extraPackages;
+          };
+        };
+
+        devShells = {
+          default = pkgs.mkShellNoCC {
+            packages = [
+              (pkgs.mkPoetryEnv {
+                projectDir = self;
+                inherit extraPackages;
+              })
+              pkgs.poetry
             ];
           };
-        }
-      );
-    };
+        };
+      }
+    );
 }
