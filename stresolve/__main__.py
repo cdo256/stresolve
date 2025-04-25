@@ -10,6 +10,7 @@ import stat
 from termcolor import colored
 import string
 import typer
+import subprocess as sp
 
 
 def find_sync_conflicts(directory):
@@ -135,6 +136,9 @@ def resolve_conflicts(directory):
                 + colored("use sync conflict (c)", "green")
                 + ", or skip (k)?"
             )
+            print(
+                "additional options: print both (p), open both in another application (n)"
+            )
             choice = input("> ").lower()
             if choice == "o":
                 os.remove(conflict)
@@ -147,6 +151,19 @@ def resolve_conflicts(directory):
             elif choice == "k":
                 print("Skipped this conflict.")
                 break
+            elif choice == "p":
+                print("Original:")
+                text = read_and_escape_nonprintable(original)
+                print(colored(text, "red"))
+                print()
+                print("Conflicted version:")
+                text = read_and_escape_nonprintable(conflict)
+                print(colored(text, "green"))
+                print()
+                continue
+            elif choice == "n":
+                sp.run(["xdg-open", original])
+                sp.run(["xdg-open", conflict])
             else:
                 print("Invalid choice.")
                 continue
