@@ -16,6 +16,7 @@ stresolve = "stresolve.__main__:main"
 python = "^3.12"
 cchardet = "^2.1.7" 
 termcolor = "^2.5.0"
+typer = "^0.15.1"
 
 [build-system]
 requires = ["poetry-core"]
