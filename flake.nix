@@ -36,7 +36,7 @@
     forEachSystem (
       pkgs:
       let
-        inherit (poetry2nix.lib.mkPoetry2Nix { inherit pkgs; }) mkPoetryApplication;
+        inherit (poetry2nix.lib.mkPoetry2Nix { inherit pkgs; }) mkPoetryApplication mkPoetryEnv;
 
         extraPackages = [ pkgs.gcc ];
       in
@@ -51,9 +51,9 @@
         devShells = {
           default = pkgs.mkShellNoCC {
             packages = [
-              (pkgs.mkPoetryEnv {
+              (mkPoetryEnv {
                 projectDir = self;
-                inherit extraPackages;
+                #inherit extraPackages;
               })
               pkgs.poetry
             ];
