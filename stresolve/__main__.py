@@ -8,6 +8,8 @@ import filecmp
 import re
 import stat
 from termcolor import colored
+import string
+import typer
 
 
 def find_sync_conflicts(directory):
@@ -19,11 +21,37 @@ def find_sync_conflicts(directory):
     return conflicts
 
 
+def read_and_escape_nonprintable(filepath):
+    with open(filepath, "rb") as f:
+        data = f.read()
+    # Build a string with non-printable characters escaped as hex (\xXX)
+    result = ""
+    for b in data:
+        char = chr(b)
+        if char in string.printable or char in "\t\n\r":
+            result += char
+        else:
+            result += "\\x{:02x}".format(b)
+    return result
+
+
 def compare_text_files(file1, file2):
-    with open(file1, "r") as f1, open(file2, "r") as f2:
-        diff = difflib.unified_diff(
-            f1.readlines(), f2.readlines(), fromfile=str(file1), tofile=str(file2)
-        )
+    try:
+        file1_contents = read_and_escape_nonprintable(file1)
+    except Exception as e:
+        print(f"No matching original file {file1} for {file2}.")
+        print(e)
+        do_remove = typer.confirm(f"Remove {file2}?")
+        if do_remove:
+            os.remove(file2)
+        return
+    file2_contents = read_and_escape_nonprintable(file2)
+    diff = difflib.unified_diff(
+        list(map(lambda line: line + "\n", file1_contents.splitlines())),
+        list(map(lambda line: line + "\n", file2_contents.splitlines())),
+        fromfile=str(file1),
+        tofile=str(file2),
+    )
     return "".join(diff)
 
 
@@ -66,15 +94,11 @@ def parse_diff(diff):
 
 
 def compare_files(file1, file2):
-    if util.is_text_file(file1) and util.is_text_file(file2):
-        diff = compare_text_files(file1, file2)
+    diff = compare_text_files(file1, file2)
+    if diff:
+        lines = parse_diff(diff) + [""]
     else:
-        areSame = filecmp.cmp(file1, file2)
-        if areSame:
-            diff = "Binary files are identical."
-        else:
-            diff = "Binary files differ."
-    lines = parse_diff(diff) + [""]
+        lines = ["diff failed.", ""]
     fstat = file1.stat()
     lines.append(colored(f"{file1} (original):", "red"))
     lines.append(colored(f"  Length: {fstat.st_size} bytes", "red"))
@@ -105,9 +129,13 @@ def resolve_conflicts(directory):
         print("\n".join(diff))
 
         while True:
-            choice = input(
-                "Keep original (o), use sync conflict (c), or skip (k)? "
-            ).lower()
+            print(
+                colored("Keep original (o)", "red")
+                + ", "
+                + colored("use sync conflict (c)", "green")
+                + ", or skip (k)?"
+            )
+            choice = input("> ").lower()
             if choice == "o":
                 os.remove(conflict)
                 print("Kept current version, removed sync conflict.")
