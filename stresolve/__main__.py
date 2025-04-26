@@ -45,7 +45,7 @@ def compare_text_files(file1, file2):
         do_remove = typer.confirm(f"Remove {file2}?")
         if do_remove:
             os.remove(file2)
-        return
+        return None
     file2_contents = read_and_escape_nonprintable(file2)
     diff = difflib.unified_diff(
         list(map(lambda line: line + "\n", file1_contents.splitlines())),
@@ -100,6 +100,11 @@ def compare_files(file1, file2):
         lines = parse_diff(diff) + [""]
     else:
         lines = ["diff failed.", ""]
+        lines.append(colored(f"{file1} (original):", "red"))
+        lines.append(colored(f"{file2} (conflict):", "green"))
+        lines.append("")
+        return lines
+
     fstat = file1.stat()
     lines.append(colored(f"{file1} (original):", "red"))
     lines.append(colored(f"  Length: {fstat.st_size} bytes", "red"))
