@@ -8,6 +8,6 @@
   outputs =
     inputs:
     inputs.flake-parts.lib.mkFlake { inherit inputs; } {
-      imports = [ ./outputs.nix ];
+      imports = [ ./flake/outputs.nix ];
     };
 }
