@@ -1,20 +1,9 @@
-from stresolve import util
-import argparse
 import os
-import difflib
-import sys
-from pathlib import Path
-import filecmp
 import re
 import stat
-from termcolor import colored
 import string
 import typer
 import subprocess as sp
-from stresolve.automerge import merge_if_applicable
-
-import string
-import stat
 import cchardet
 
 
