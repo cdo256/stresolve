@@ -53,9 +53,9 @@ def compare_text_files(file1, file2):
     try:
         file1_contents = read_and_escape_nonprintable(file1)
     except Exception as e:
-        print(f"No matching original file {file1} for {file2}.")
-        print(e)
-        return None
+        raise RuntimeError(
+            f"No matching original file {file1} for {file2}: {e!r}"
+        ) from e
     file2_contents = read_and_escape_nonprintable(file2)
     diff = difflib.unified_diff(
         list(map(lambda line: line + "\n", file1_contents.splitlines())),
@@ -105,15 +105,21 @@ def parse_diff(diff):
 
 
 def compare_files(file1, file2):
-    diff = compare_text_files(file1, file2)
-    if diff:
+    try:
+        diff = compare_text_files(file1, file2)
+        print(f"diff = {diff!r}")
+        if len(diff) == 0:
+            # Files are identical
+            return None
         lines = parse_diff(diff) + [""]
-    else:
-        lines = ["diff failed.", ""]
+        print(f"lines = {lines!r}")
+    except Exception as e:
+        lines = [f"diff failed: {e!r}", ""]
         lines.append(colored(f"{file1} (original):", "red"))
         lines.append(colored(f"{file2} (conflict):", "green"))
         lines.append("")
-        return lines
+    print(f"final lines = {lines!r}")
+    return lines
 
     fstat = file1.stat()
     lines.append(colored(f"{file1} (original):", "red"))
@@ -141,8 +147,11 @@ def resolve_conflicts(directory):
         print(f"Original file: {original}")
 
         diff = compare_files(original, conflict)
-        print("\nDifferences:")
-        print("\n".join(diff))
+        if diff is None:
+            print("Files are identical.")
+        else:
+            print("\nDifferences:")
+            print("\n".join(diff))
 
         while True:
             print(
