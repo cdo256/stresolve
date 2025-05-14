@@ -9,7 +9,7 @@ from .conflicts import find_sync_conflicts
 from .diffing import compare_files
 
 
-options = {"use_trash": False}
+options = {"use_trash": False, "dir": None}
 
 
 def resolve_conflicts(directory):
@@ -63,7 +63,7 @@ def resolve_conflicts(directory):
                 sp.run(["xdg-open", original])
                 sp.run(["xdg-open", conflict])
             elif choice == "m":
-                merge_if_applicable(conflict)
+                merge_if_applicable(conflict, options["dir"])
             else:
                 print("Invalid choice.")
                 continue
@@ -74,6 +74,8 @@ def main():
     ap.add_argument("--use-trash", "-t", action="store_true")
     ap.add_argument("dir")
     args = ap.parse_args()
+    options["use_trash"] = args.use_trash
+    options["dir"] = args.dir
 
     try:
         resolve_conflicts(Path(args.dir))

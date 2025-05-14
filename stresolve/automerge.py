@@ -32,8 +32,8 @@ from watchdog.observers import Observer as FileSystemObserver
 from watchdog.events import FileSystemEventHandler
 
 
-def get_relative_path(path):
-    return os.path.relpath(path)
+def get_relative_path(path, dir="."):
+    return os.path.relpath(path, start=dir)
 
 
 def merge_files(original, backup, conflict):
@@ -45,7 +45,7 @@ def merge_files(original, backup, conflict):
         raise RuntimeError("Git command failed!")
 
 
-def merge_if_applicable(src_path):
+def merge_if_applicable(src_path, dir="."):
     """Perform a three way merge on and remove a given possible syncthing conflict file if:
     - It is an actual conflict file (determined by naming scheme)
     - The associated canonical file exists ("real" file path)
@@ -56,7 +56,7 @@ def merge_if_applicable(src_path):
         # print(src_path, "is not a file")
         return
 
-    candidate_file_path = get_relative_path(src_path)
+    candidate_file_path = get_relative_path(src_path, dir)
 
     match = re.search(
         # . is converted to %2F when a conflict file is opened in Logseq
