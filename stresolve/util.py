@@ -1,3 +1,20 @@
+from stresolve import util
+import argparse
+import os
+import difflib
+import sys
+from pathlib import Path
+import filecmp
+import re
+import stat
+from termcolor import colored
+import string
+import typer
+import subprocess as sp
+from stresolve.automerge import merge_if_applicable
+
+import string
+import stat
 import cchardet
 
 
@@ -79,3 +96,52 @@ def is_text_file(
     ratio = len(non_text) / len(combined_sample) if combined_sample else 0
 
     return ratio <= non_text_threshold
+
+
+def read_and_escape_nonprintable(filepath):
+    with open(filepath, "rb") as f:
+        data = f.read()
+    # Build a string with non-printable characters escaped as hex (\xXX)
+    result = ""
+    for b in data:
+        char = chr(b)
+        if char in string.printable or char in "\t\n\r":
+            result += char
+        else:
+            result += "\\x{:02x}".format(b)
+    return result
+
+
+def file_type_from_stat(fstat):
+    mode = fstat.st_mode
+    if stat.S_ISDIR(mode):
+        return "directory"
+    elif stat.S_ISREG(mode):
+        return "regular file"
+    elif stat.S_ISLNK(mode):
+        return "symlink"
+    elif stat.S_ISCHR(mode):
+        return "character device"
+    elif stat.S_ISBLK(mode):
+        return "block device"
+    elif stat.S_ISFIFO(mode):
+        return "FIFO/pipe"
+    elif stat.S_ISSOCK(mode):
+        return "socket"
+    else:
+        return "unknown"
+
+
+def do_remove(file):
+    if options.use_trash:
+        do_remove = typer.confirm(f"Send {file} to trash?")
+        if do_remove:
+            sp.run(["trash", file])
+    else:
+        do_remove = typer.confirm(f"Remove {file}?")
+        if do_remove:
+            os.remove(file)
+
+
+def strip_suffix(filename):
+    return re.sub(r"\.sync-conflict-\w*-\w*-\w*", "", str(filename))
