@@ -3,18 +3,11 @@
   inputs,
   ...
 }:
-let
-  inherit (inputs.nixpkgs.lib.attrsets)
-    mapAttrs
-    mergeAttrsList
-    ;
-  inherit (inputs.nixpkgs.lib) genAttrs;
-in
 {
   perSystem =
     { pkgs, poetry2nix-instance, ... }:
     let
-      inherit (poetry2nix-instance) mkPoetryApplication mkPoetryEnv;
+      inherit (poetry2nix-instance) mkPoetryApplication;
 
       extraPackages = [ pkgs.gcc ];
     in
