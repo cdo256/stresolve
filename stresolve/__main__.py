@@ -12,6 +12,8 @@ import string
 import typer
 import subprocess as sp
 
+options = {"use_trash": False}
+
 
 def find_sync_conflicts(directory):
     conflicts = []
@@ -36,15 +38,23 @@ def read_and_escape_nonprintable(filepath):
     return result
 
 
+def do_remove(file):
+    if options.use_trash:
+        do_remove = typer.confirm(f"Send {file} to trash?")
+        if do_remove:
+            sp.run(["trash", file])
+    else:
+        do_remove = typer.confirm(f"Remove {file}?")
+        if do_remove:
+            os.remove(file)
+
+
 def compare_text_files(file1, file2):
     try:
         file1_contents = read_and_escape_nonprintable(file1)
     except Exception as e:
         print(f"No matching original file {file1} for {file2}.")
         print(e)
-        do_remove = typer.confirm(f"Remove {file2}?")
-        if do_remove:
-            os.remove(file2)
         return None
     file2_contents = read_and_escape_nonprintable(file2)
     diff = difflib.unified_diff(
@@ -176,6 +186,7 @@ def resolve_conflicts(directory):
 
 def main():
     ap = argparse.ArgumentParser()
+    ap.add_argument("--use-trash", "-t", action="store_true")
     ap.add_argument("dir")
     args = ap.parse_args()
 
