@@ -17,6 +17,7 @@ python = "^3.12"
 cchardet = "^2.1.7" 
 termcolor = "^2.5.0"
 typer = "^0.15.1"
+watchdog = "^6.0.0"
 
 [build-system]
 requires = ["poetry-core"]

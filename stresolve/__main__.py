@@ -11,6 +11,7 @@ from termcolor import colored
 import string
 import typer
 import subprocess as sp
+from stresolve.automerge import merge_if_applicable
 
 options = {"use_trash": False}
 
@@ -161,7 +162,8 @@ def resolve_conflicts(directory):
                 + ", or skip (k)?"
             )
             print(
-                "additional options: print both (p), open both in another application (n)"
+                "additional options: print both (p), open both in another application (n),\n"
+                "automerge (m)"
             )
             choice = input("> ").lower()
             if choice == "o":
@@ -188,6 +190,8 @@ def resolve_conflicts(directory):
             elif choice == "n":
                 sp.run(["xdg-open", original])
                 sp.run(["xdg-open", conflict])
+            elif choice == "m":
+                merge_if_applicable(conflict)
             else:
                 print("Invalid choice.")
                 continue
